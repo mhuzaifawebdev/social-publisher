@@ -1,0 +1,19 @@
+# Every 10 minutes: the safety-net run (due posts, stuck rows, token renewal, LinkedIn numbers, report rollup).
+# Repository secrets: APP_URL (https://your-app.vercel.app) and CRON_SECRET (same value as in Vercel).
+name: sweep
+on:
+  schedule: [{ cron: "*/10 * * * *" }]
+  workflow_dispatch: {}
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call the sweep
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          code=$(curl -s -o out.json -w "%{http_code}" --max-time 90 -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/sweep")
+          cat out.json; echo
+          test "$code" = "200"

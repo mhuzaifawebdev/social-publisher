@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0f172a;
+  --color-mut: #64748b;
+  --color-line: #e2e8f0;
+  --color-bg: #f6f7fb;
+  --color-card: #ffffff;
+  --color-brand: #0a66c2;
+  --color-brand-soft: #e8f1fb;
+  --color-ok: #15803d;
+  --color-ok-soft: #e7f6ec;
+  --color-warn: #b45309;
+  --color-warn-soft: #fdf3e2;
+  --color-bad: #b42318;
+  --color-bad-soft: #fdecea;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html, body { background: var(--color-bg); color: var(--color-ink); }
+body { font-size: 14px; -webkit-font-smoothing: antialiased; }
+
+@layer components {
+  .card { @apply rounded-xl border border-line bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,.04)]; }
+  .h1 { @apply text-xl font-semibold tracking-tight; }
+  .h2 { @apply text-[15px] font-semibold; }
+  .mut { @apply text-mut; }
+  .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-white px-3 py-1.5 text-[13px] font-medium text-ink transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply border-brand bg-brand text-white hover:bg-[#08539e]; }
+  .btn-danger { @apply border-bad-soft bg-bad-soft text-bad hover:bg-[#fbd9d5]; }
+  .btn-sm { @apply px-2 py-1 text-xs; }
+  .input { @apply w-full rounded-lg border border-line bg-white px-3 py-2 text-[13px] outline-none transition focus:border-brand focus:ring-2 focus:ring-brand-soft; }
+  .label { @apply mb-1 block text-xs font-medium text-mut; }
+  .pill { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold; }
+  .tbl { @apply w-full border-collapse text-[13px]; }
+  .tbl th { @apply border-b border-line px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-mut; }
+  .tbl td { @apply border-b border-line px-3 py-2 align-top; }
+  .skel { @apply animate-pulse rounded-md bg-slate-200/70; }
+}
+
+/* thin progress bar shown while a server action or navigation runs */
+.loadbar { position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60; background: linear-gradient(90deg, transparent, var(--color-brand), transparent); background-size: 50% 100%; animation: lb 1s linear infinite; }
+@keyframes lb { from { background-position: -50% 0; } to { background-position: 150% 0; } }
