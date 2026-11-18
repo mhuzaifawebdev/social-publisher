@@ -14,7 +14,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ platform: s
   const { platform: pid } = await ctx.params;
   const back = (q: string) => NextResponse.redirect(`${appUrl()}/accounts?${q}`);
   const sp = req.nextUrl.searchParams;
-  if (sp.get("error")) return back(`error=${encodeURIComponent(`Not connected: ${sp.get("error_description") || sp.get("error")}`)}`);
+  const unhtml = (x: string) => x.replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  if (sp.get("error")) return back(`error=${encodeURIComponent(`Not connected: ${unhtml(sp.get("error_description") || sp.get("error") || "")}`)}`);
   try {
     const user = await currentUser();
     if (!user) return NextResponse.redirect(`${appUrl()}/login`);

@@ -5,7 +5,7 @@ export type TokenSet = {
   accessToken: string; expiresAt: Date | null;
   refreshToken: string | null; refreshExpiresAt: Date | null; scopes: string;
 };
-export type ConnectOption = { id: string; urn: string; name: string; avatarUrl?: string | null };
+export type ConnectOption = { id: string; urn: string; name: string; avatarUrl?: string | null; role?: string };
 export type AccountRef = { id: number; kind: AccountKind; urn: string; externalId: string; name: string };
 export type PublishInput = { text: string; link?: string | null; linkTitle?: string | null; mediaId?: string | null };
 export type PublishResult = { externalId: string; url: string | null };
@@ -22,6 +22,7 @@ export interface PlatformAdapter {
   exchange(kind: AccountKind, code: string, redirectUri: string): Promise<TokenSet>;
   refresh(kind: AccountKind, refreshToken: string): Promise<TokenSet>;
   options(kind: AccountKind, token: string): Promise<ConnectOption[]>;
+  lookupPage?(token: string, idOrLink: string): Promise<ConnectOption | null>;
   check(account: AccountRef, token: string): Promise<{ ok: boolean; note: string }>;
   uploadImage(account: AccountRef, token: string, bytes: Uint8Array, contentType: string): Promise<string>;
   publish(account: AccountRef, token: string, input: PublishInput): Promise<PublishResult>;

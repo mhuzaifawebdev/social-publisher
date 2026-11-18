@@ -68,9 +68,19 @@ export async function chooseAccounts(sessionId: string, form: FormData) {
   if (!s || Date.now() - s.createdAt.getTime() > 30 * 60_000) redirect("/accounts?error=" + encodeURIComponent("This choice expired. Press Connect again."));
   const ids = form.getAll("org").map(String);
   const chosen = s.options.filter((o) => ids.includes(o.id));
+  const token = decrypt(s.tokenEnc);
+  const manual = String(form.get("manual") || "").trim();
+  if (manual) {
+    const p = platform(s.platform);
+    const o = p.lookupPage ? await p.lookupPage(token, manual) : null;
+    if (!o) redirect(`/accounts/choose/${sessionId}?err=` + encodeURIComponent("That is not a Page ID. Use the number in linkedin.com/company/<number>/admin."));
+    const c = await p.check({ id: 0, kind: "page", urn: o.urn, externalId: o.id, name: o.name }, token);
+    if (!c.ok) redirect(`/accounts/choose/${sessionId}?err=` + encodeURIComponent(`Page ${o.id}: ${c.note}`));
+    if (!chosen.some((x) => x.id === o.id)) chosen.push(o);
+  }
   if (chosen.length) {
     await saveAccounts(u.id, s.platform, s.kind as "page", {
-      accessToken: decrypt(s.tokenEnc), refreshToken: s.refreshEnc ? decrypt(s.refreshEnc) : null,
+      accessToken: token, refreshToken: s.refreshEnc ? decrypt(s.refreshEnc) : null,
       expiresAt: s.tokenExpiresAt, refreshExpiresAt: s.refreshExpiresAt, scopes: s.scopes ?? "",
     }, chosen);
     await audit(u.id, "account.connected", `${s.platform} pages: ${chosen.map((c) => c.name).join(", ")}`);

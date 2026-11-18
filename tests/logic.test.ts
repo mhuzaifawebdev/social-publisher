@@ -66,12 +66,17 @@ describe("LinkedIn adapter with a fake LinkedIn", () => {
     expect(e.retry).toBe(true);
   });
 
-  it("lists the Pages the person administers", async () => {
+  it("lists every Page with an approved role (Super admin and Content admin), with the role, and finds a Page by ID", async () => {
     const li = fake((u) => u.includes("organizationAcls")
-      ? Response.json({ elements: [{ organization: "urn:li:organization:5" }, { organization: "urn:li:organization:9" }] })
-      : Response.json({ results: { "5": { localizedName: "PGI" } } }));
+      ? (u.includes("role=") ? new Response("role filter must not be used", { status: 400 })
+        : Response.json({ elements: [{ organization: "urn:li:organization:5", role: "ADMINISTRATOR" }, { organization: "urn:li:organization:106895244", role: "CONTENT_ADMINISTRATOR" }] }))
+      : Response.json({ results: { "5": { localizedName: "BuyPremiumTools" }, "106895244": { localizedName: "Paragon Global Internships" } } }));
     const o = await li.options("page", "tok");
-    expect(o).toEqual([{ id: "5", urn: "urn:li:organization:5", name: "PGI", avatarUrl: null }, { id: "9", urn: "urn:li:organization:9", name: "LinkedIn Page 9", avatarUrl: null }]);
+    expect(o).toEqual([
+      { id: "5", urn: "urn:li:organization:5", name: "BuyPremiumTools", avatarUrl: null, role: "Super admin" },
+      { id: "106895244", urn: "urn:li:organization:106895244", name: "Paragon Global Internships", avatarUrl: null, role: "Content admin" }]);
+    expect(await li.lookupPage!("tok", "https://www.linkedin.com/company/106895244/admin/")).toMatchObject({ id: "106895244", name: "Paragon Global Internships" });
+    expect(await li.lookupPage!("tok", "abc")).toBeNull();
   });
 
   it("reads Page statistics in one call", async () => {

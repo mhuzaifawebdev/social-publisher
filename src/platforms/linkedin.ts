@@ -66,6 +66,11 @@ export function liVersions(saved: string, now = new Date()): string[] {
   return out;
 }
 
+const ROLES: Record<string, string> = { ADMINISTRATOR: "Super admin", CONTENT_ADMINISTRATOR: "Content admin",
+  CURATOR: "Curator", ANALYST: "Analyst", DIRECT_SPONSORED_CONTENT_POSTER: "Sponsored content poster",
+  RECRUITING_POSTER: "Recruiting poster", LEAD_GEN_FORMS_MANAGER: "Lead gen forms manager" };
+export function liRole(r?: string) { return ROLES[String(r || "")] ?? String(r || "role").toLowerCase().replace(/_/g, " "); }
+
 export function liPostUrl(urn: string): string { return `https://www.linkedin.com/feed/update/${urn}/`; }
 
 /** LinkedIn's error answer in plain words, and whether trying again later can help. */
@@ -106,6 +111,16 @@ export function linkedin(deps: LinkedInDeps): PlatformAdapter {
       return res;
     }
     return res!;
+  }
+
+  async function liOrgNames(ids: string[], token: string): Promise<Record<string, string>> {
+    const names: Record<string, string> = {};
+    const org = await rest(`/organizations?ids=List(${ids.join(",")})`, token);
+    if (org.ok) {
+      const d = (await org.json()) as { results?: Record<string, { localizedName?: string }> };
+      for (const [k, v] of Object.entries(d.results ?? {})) names[k] = v.localizedName ?? "";
+    }
+    return names;
   }
 
   async function tokenCall(kind: AccountKind, form: Record<string, string>): Promise<TokenSet> {
@@ -154,19 +169,27 @@ export function linkedin(deps: LinkedInDeps): PlatformAdapter {
         const u = (await r.json()) as { sub: string; name?: string; picture?: string };
         return [{ id: u.sub, urn: `urn:li:person:${u.sub}`, name: u.name || "LinkedIn profile", avatarUrl: u.picture ?? null }];
       }
-      const acl = await rest("/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED&count=100", token);
+      // every Page the person has an approved role on (Super admin, Content admin, ...), with the role shown
+      const acl = await rest("/organizationAcls?q=roleAssignee&state=APPROVED&count=100", token);
       if (!acl.ok) throw new PlatformError(liExplain(acl.status, await acl.text()).message, false);
-      const urns = ((await acl.json()) as { elements?: { organization?: string }[] }).elements
-        ?.map((e) => e.organization).filter((x): x is string => !!x) ?? [];
-      if (!urns.length) return [];
-      const ids = urns.map((u) => u.split(":").pop()!);
-      const names: Record<string, string> = {};
-      const org = await rest(`/organizations?ids=List(${ids.join(",")})`, token);
-      if (org.ok) {
-        const d = (await org.json()) as { results?: Record<string, { localizedName?: string }> };
-        for (const [k, v] of Object.entries(d.results ?? {})) names[k] = v.localizedName ?? "";
+      const roles: Record<string, string[]> = {};
+      for (const e of ((await acl.json()) as { elements?: { organization?: string; role?: string }[] }).elements ?? []) {
+        const id = e.organization?.split(":").pop();
+        if (id) roles[id] = [...(roles[id] ?? []), liRole(e.role)];
       }
-      return ids.map((id) => ({ id, urn: `urn:li:organization:${id}`, name: names[id] || `LinkedIn Page ${id}`, avatarUrl: null }));
+      const ids = Object.keys(roles);
+      if (!ids.length) return [];
+      const names = await liOrgNames(ids, token);
+      return ids.map((id) => ({ id, urn: `urn:li:organization:${id}`, name: names[id] || `LinkedIn Page ${id}`, avatarUrl: null,
+        role: [...new Set(roles[id])].join(", ") }));
+    },
+
+    /** A Page typed in by its ID (106895244 or a linkedin.com/company/<id> link), when it is not in the list. */
+    async lookupPage(token, raw) {
+      const id = String(raw || "").match(/(\d{4,})/)?.[1];
+      if (!id) return null;
+      const names = await liOrgNames([id], token);
+      return { id, urn: `urn:li:organization:${id}`, name: names[id] || `LinkedIn Page ${id}`, avatarUrl: null };
     },
 
     async check(account, token) {

@@ -60,7 +60,7 @@ export const connectSessions = pgTable("connect_sessions", {
   tokenExpiresAt: ts("token_expires_at"),
   refreshExpiresAt: ts("refresh_expires_at"),
   scopes: text("scopes"),
-  options: jsonb("options").$type<{ id: string; urn: string; name: string; avatarUrl?: string | null }[]>().notNull(),
+  options: jsonb("options").$type<{ id: string; urn: string; name: string; avatarUrl?: string | null; role?: string }[]>().notNull(),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
 
