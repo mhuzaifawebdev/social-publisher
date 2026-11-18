@@ -36,7 +36,7 @@ export default async function AccountsPage({ searchParams }: { searchParams: Pro
           <p className="mut mb-3 mt-1 text-xs">Sign in as an admin of the Page; you then tick which of your Pages to add. Needs the approved Community Management app.</p>
           {can(user, "admin") ? (
             li.configured("page") ? <a className="btn btn-primary" href="/api/connect/linkedin/page">Connect LinkedIn Page</a>
-              : <p className="text-xs text-warn">Add LINKEDIN_PAGE_CLIENT_ID and LINKEDIN_PAGE_CLIENT_SECRET in Vercel first (see README).</p>
+              : <p className="text-xs text-warn">Add LINKEDIN_PAGE_CLIENT_ID and LINKEDIN_PAGE_CLIENT_SECRET (or LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET) in Vercel, then redeploy (see README).</p>
           ) : <p className="mut text-xs">Only an admin can connect Pages.</p>}
         </div>
         <div className="card">

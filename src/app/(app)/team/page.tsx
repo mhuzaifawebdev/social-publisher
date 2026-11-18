@@ -6,6 +6,7 @@ import { fmtWhen } from "@/lib/time";
 import { queueOn } from "@/server/queue";
 import { envOr } from "@/lib/env";
 import { TeamUI } from "./ui";
+import { liPageId, liPageSecret } from "@/platforms";
 
 export const metadata = { title: "Team & settings" };
 
@@ -24,7 +25,7 @@ export default async function TeamPage() {
     ["Exact-time publishing (QStash)", queueOn()],
     ["Image uploads (Vercel Blob)", !!envOr("BLOB_READ_WRITE_TOKEN")],
     ["Background check (CRON_SECRET)", !!envOr("CRON_SECRET")],
-    ["LinkedIn Pages app", !!envOr("LINKEDIN_PAGE_CLIENT_ID") && !!envOr("LINKEDIN_PAGE_CLIENT_SECRET")],
+    ["LinkedIn Pages app", !!liPageId() && !!liPageSecret()],
     ["LinkedIn profiles app", !!envOr("LINKEDIN_MEMBER_CLIENT_ID") && !!envOr("LINKEDIN_MEMBER_CLIENT_SECRET")],
     ["AI assist (GEMINI_API_KEY)", !!envOr("GEMINI_API_KEY")],
   ] as const;
